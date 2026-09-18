@@ -1,69 +1,98 @@
-import Image from "next/image";
+import { getLatestRecipes } from "@/lib/recipes";
+import { testSupabaseConnection } from "@/lib/supabase/connection";
 
-export default function Home() {
+export default async function Home() {
+  const connection = await testSupabaseConnection();
+  const { recipes, error, configured } = await getLatestRecipes();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-10">
+      <p
+        role="status"
+        className={`rounded-md border px-4 py-3 text-sm ${
+          connection.ok
+            ? "border-green-200 bg-green-50 text-green-900"
+            : "border-amber-200 bg-amber-50 text-amber-900"
+        }`}
+      >
+        <span className="font-medium">Supabase: </span>
+        {connection.message}
+      </p>
+      <section className="flex max-w-xl flex-col gap-3">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Simple recipes from home cooks
+        </h1>
+        <p className="text-base leading-7 text-stone-600">
+          Browse what people are cooking, then share a recipe of your own.
+        </p>
+      </section>
+
+      <search className="flex flex-col gap-3 sm:flex-row">
+        <label className="sr-only" htmlFor="recipe-search">
+          Search recipes
+        </label>
+        <input
+          id="recipe-search"
+          name="q"
+          type="search"
+          placeholder="Search by name or ingredient"
+          className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-orange-700 placeholder:text-stone-400 focus:ring-2"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+        <button
+          type="button"
+          className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
+        >
+          Search
+        </button>
+      </search>
+
+      <section aria-labelledby="latest-recipes-heading" className="flex flex-col gap-4">
+        <h2 id="latest-recipes-heading" className="text-lg font-semibold">
+          Latest recipes
+        </h2>
+        {!configured ? (
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Add your Supabase URL and anon or publishable key to{" "}
+            <code className="font-mono">.env</code> or{" "}
+            <code className="font-mono">.env.local</code>, then restart the
+            dev server.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        ) : null}
+        {error ? (
+          <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Could not load recipes: {error}
+          </p>
+        ) : null}
+        {configured && !error && recipes.length === 0 ? (
+          <p className="text-sm text-stone-600">
+            No recipes yet. Add a row in the Supabase Table Editor to see it
+            here.
+          </p>
+        ) : null}
+        {recipes.length > 0 ? (
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recipes.map((recipe) => (
+              <li key={recipe.id}>
+                <article className="flex h-full flex-col rounded-lg border border-stone-200 bg-white p-4">
+                  <div
+                    aria-hidden="true"
+                    className="mb-4 h-28 rounded-md bg-orange-100"
+                  />
+                  <h3 className="text-base font-semibold">{recipe.title}</h3>
+                  <p className="mt-1 text-sm text-stone-600">
+                    {recipe.author} · {recipe.cookingTime} · {recipe.difficulty}
+                  </p>
+                  <p className="mt-3">
+                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
+                      {recipe.category}
+                    </span>
+                  </p>
+                </article>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+    </main>
   );
 }
