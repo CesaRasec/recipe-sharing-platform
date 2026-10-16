@@ -13,6 +13,8 @@ function readString(formData: FormData, key: string) {
 function revalidateLikes(recipeId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/recipes/mine");
+  revalidatePath("/favorites");
+  revalidatePath("/profile");
   revalidatePath(`/recipes/${recipeId}`);
 }
 

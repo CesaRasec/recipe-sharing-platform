@@ -64,6 +64,23 @@ export function DashboardFiltersSkeleton() {
   );
 }
 
+export function FavoritesPageSkeleton() {
+  return (
+    <main
+      className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <span className="sr-only">Loading favorites</span>
+      <section className="flex max-w-xl flex-col gap-2">
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="h-5 w-80 max-w-full" />
+      </section>
+      <RecipeGridSkeleton />
+    </main>
+  );
+}
+
 export function DashboardFeedSkeleton() {
   return (
     <div className="flex flex-col gap-10">

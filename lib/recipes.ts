@@ -182,6 +182,52 @@ export async function getMyRecipes(
   return fetchRecipes({ equalsUserId: userId, ...filters });
 }
 
+export async function getLikedRecipes(userId: string): Promise<{
+  recipes: RecipeCard[];
+  error: string | null;
+}> {
+  if (!isSupabaseConfigured()) {
+    return { recipes: [], error: null };
+  }
+
+  const supabase = await createClient();
+  const { data: likes, error: likesError } = await supabase
+    .from("recipe_likes")
+    .select("recipe_id, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (likesError) {
+    return { recipes: [], error: likesError.message };
+  }
+
+  const recipeIds = (likes ?? []).map((like) => like.recipe_id);
+  if (recipeIds.length === 0) {
+    return { recipes: [], error: null };
+  }
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .select(
+      "id, user_id, title, cooking_time, difficulty, category, image_url, profiles!user_id ( username, full_name )",
+    )
+    .in("id", recipeIds);
+
+  if (error) {
+    return { recipes: [], error: error.message };
+  }
+
+  const byId = new Map(
+    ((data ?? []) as RecipeQueryRow[]).map((row) => [row.id, toCard(row)]),
+  );
+  return {
+    recipes: recipeIds
+      .map((id) => byId.get(id))
+      .filter((recipe): recipe is RecipeCard => Boolean(recipe)),
+    error: null,
+  };
+}
+
 export async function getRecipeCategories(): Promise<string[]> {
   if (!isSupabaseConfigured()) {
     return [];

@@ -35,6 +35,12 @@ async function SiteHeaderNav() {
               My recipes
             </Link>
             <Link
+              href="/favorites"
+              className="rounded-md px-3 py-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+            >
+              Favorites
+            </Link>
+            <Link
               href="/profile"
               className="rounded-md px-3 py-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900"
             >
